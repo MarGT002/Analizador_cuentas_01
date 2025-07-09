@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="García Terrazas Mario">
+    <meta name="copyright" content="2025 - Deguel">
+    <title>Analizador de Ventas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .nav-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 80px;
+            background-color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #003366;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section h3 {
+            color: #003366;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .file-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .file-section label {
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        .file-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .checkbox-item label {
+            font-weight: 500;
+            color: #003366;
+            cursor: pointer;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-item label {
+            font-weight: bold;
+            color: #003366;
+        }
+
+        .filter-item select, .filter-item input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .filter-item select:focus, .filter-item input:focus {
+            outline: none;
+            border-color: #005599;
+            box-shadow: 0 0 5px rgba(0, 85, 153, 0.3);
+        }
+
+        .percentage-filter {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e6f3ff;
+            border-radius: 4px;
+            border: 1px solid #cce7ff;
+        }
+
+        .percentage-filter.show {
+            display: block;
+        }
+
+        .percentage-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .percentage-controls label {
+            font-weight: bold;
+            color: #003366;
+        }
+
+        .percentage-controls select,
+        .percentage-controls input {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .calculate-btn {
+            background-color: #003366;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+
+        .calculate-btn:hover {
+            background-color: #005599;
+        }
+
+        .calculate-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            border: 2px solid #003366;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: white;
+        }
+
+        .result-section h3 {
+            margin-bottom: 15px;
+            color: #003366;
+        }
+
+        .stats-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #003366;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-item {
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #f0f8ff;
+            border: 1px solid #d4edda;
+        }
+
+        .table-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+        }
+
+        .table-header {
+            background-color: #003366;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .table-content {
+            max-height: 600px;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #003366;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+            margin: 10px 0;
+        }
+
+        .negative-value {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .positive-value {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .row-number {
+            text-align: center;
+            font-weight: bold;
+            color: #666;
+            background-color: #f8f9fa;
+            width: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .file-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .percentage-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <button onclick="window.location.href='index.html'" style="background-color: #003366; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background-color 0.3s, transform 0.2s;">
+                Analizador
+            </button>
+            <button onclick="window.location.href='amarres.html'" style="background-color: #003366; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background-color 0.3s, transform 0.2s;">
+                Amarres
+            </button>
+        </div>
+        
+        <div class="header">
+            <h1>Analizador de Ventas</h1>
+            <p>Seleccione un archivo Excel y configure las columnas y filtros para analizar las ventas</p>
+        </div>
+
+        <div class="section">
+            <h3>📁 Archivo Excel</h3>
+            <div class="file-section">
+                <label for="excelFile">Seleccionar archivo:</label>
+                <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls" />
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Columnas a Mostrar</h3>
+            <div class="checkbox-grid">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showVIN" value="VIN">
+                    <label for="showVIN">VIN</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showVendedor" value="Nombre vendedor" checked>
+                    <label for="showVendedor">Nombre Vendedor</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showReferencia" value="Refer." checked>
+                    <label for="showReferencia">Referencia</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showEmpresa" value="Concesi" checked>
+                    <label for="showEmpresa">Empresa</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showUD" value="UD">
+                    <label for="showUD">UD</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showCliente" value="Cliente">
+                    <label for="showCliente">Cliente</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showModelo" value="Modelo">
+                    <label for="showModelo">Modelo</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showVentaPura" value="VENTA PURA">
+                    <label for="showVentaPura">Venta Pura</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showBeneficioPuro" value="BENEFICIO PURO">
+                    <label for="showBeneficioPuro">Beneficio Puro</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showCostoTaller" value="Cos.taller">
+                    <label for="showCostoTaller">Costo Taller</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showBeneficio" value="Beneficio" checked>
+                    <label for="showBeneficio">Beneficio</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showPorcentaje" value="Porcentaje" checked onchange="togglePercentageFilter()">
+                    <label for="showPorcentaje">Porcentaje</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showPerdida" value="Perdida">
+                    <label for="showPerdida">Pérdida</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="showGanancia" value="Ganancia">
+                    <label for="showGanancia">Ganancia</label>
+                </div>
+            </div>
+            
+            <!-- Filtro de Porcentaje -->
+            <div id="percentageFilter" class="percentage-filter">
+                <h4 style="margin-bottom: 10px; color: #003366;">Filtro de Porcentaje</h4>
+                <div class="percentage-controls">
+                    <label>Columna(s) activa(s):</label>
+                    <span id="activeColumns" style="font-weight: bold; color: #005599;"></span>
+                    <label>Condición:</label>
+                    <select id="percentageCondition">
+                        <option value="mayor">Mayor a</option>
+                        <option value="menor">Menor a</option>
+                        <option value="igual">Igual a</option>
+                    </select>
+                    
+                    <label>Valor (%):</label>
+                    <input type="number" id="percentageValue" step="0.01" placeholder="0.00" />
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Filtros</h3>
+            <div class="filters-grid">
+                <div class="filter-item">
+                    <label>Nombre Vendedor:</label>
+                    <select id="vendedorFilter">
+                        <option value="">Todos los vendedores...</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Empresa:</label>
+                    <select id="empresaFilter">
+                        <option value="">Todas las empresas...</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Cliente:</label>
+                    <select id="clienteFilter">
+                        <option value="">Todos los clientes...</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Modelo:</label>
+                    <select id="modeloFilter">
+                        <option value="">Todos los modelos...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button class="calculate-btn" id="calculateBtn" onclick="generateTable()">GENERAR TABLA</button>
+
+        <div class="result-section">
+            <h3>📊 RESUMEN</h3>
+            <div class="stats-info" id="statsInfo">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <strong>Registros encontrados:</strong> <span id="totalRegistros">0</span>
+                    </div>
+                    <div id="statsContent">
+                        Cargue un archivo Excel y genere la tabla para ver estadísticas
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header" id="tableTitle">📋 Tabla de Ventas</div>
+            <div class="table-content" id="tableContent">
+                <div class="loading">Cargue un archivo Excel para generar la tabla</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let excelData = null;
+        let filterOptions = {
+            vendedores: [],
+            empresas: [],
+            clientes: [],
+            modelos: []
+        };
+
+        // Función para mostrar/ocultar filtro de porcentaje
+        function togglePercentageFilter() {
+            const percentageCheckbox = document.getElementById('showPorcentaje');
+            const percentageFilter = document.getElementById('percentageFilter');
+            const beneficioPuroCheckbox = document.getElementById('showBeneficioPuro');
+            const beneficioCheckbox = document.getElementById('showBeneficio');
+            const activeColumns = document.getElementById('activeColumns');
+            
+            if (percentageCheckbox.checked && (beneficioPuroCheckbox.checked || beneficioCheckbox.checked)) {
+                percentageFilter.classList.add('show');
+                
+                // Mostrar columnas activas
+                let activeText = '';
+                if (beneficioPuroCheckbox.checked && beneficioCheckbox.checked) {
+                    activeText = 'Beneficio Puro y Beneficio';
+                } else if (beneficioPuroCheckbox.checked) {
+                    activeText = 'Beneficio Puro';
+                } else if (beneficioCheckbox.checked) {
+                    activeText = 'Beneficio';
+                }
+                activeColumns.textContent = activeText;
+            } else {
+                percentageFilter.classList.remove('show');
+            }
+        }
+
+        // Función para formatear valores
+        function formatValue(value) {
+            if (value === null || value === undefined || value === '') {
+                return '';
+            }
+            
+            let strValue = String(value);
+            
+            if (strValue.endsWith('.0')) {
+                return strValue.slice(0, -2);
+            }
+            
+            return strValue;
+        }
+
+        // Función para formatear números monetarios
+        function formatCurrency(value) {
+            if (value === null || value === undefined || value === '' || isNaN(value)) {
+                return '0.00';
+            }
+            return parseFloat(value).toLocaleString('es-ES', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        }
+
+        // Cargar archivo Excel
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    excelData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    loadFilterOptions();
+                    showSuccess('Archivo cargado exitosamente');
+                } catch (error) {
+                    showError('Error al leer el archivo: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Agregar event listeners para mostrar/ocultar filtro de porcentaje
+        document.getElementById('showBeneficioPuro').addEventListener('change', togglePercentageFilter);
+        document.getElementById('showBeneficio').addEventListener('change', togglePercentageFilter);
+
+        function loadFilterOptions() {
+            if (!excelData || excelData.length === 0) return;
+
+            // Obtener opciones únicas para cada filtro
+            const vendedores = [...new Set(excelData.map(row => formatValue(row['Nombre vendedor'])).filter(val => val !== ''))];
+            const empresas = [...new Set(excelData.map(row => formatValue(row['Concesi'])).filter(val => val !== ''))];
+            const clientes = [...new Set(excelData.map(row => formatValue(row['Cliente'])).filter(val => val !== ''))];
+            const modelos = [...new Set(excelData.map(row => formatValue(row['Modelo'])).filter(val => val !== ''))];
+
+            // Ordenar opciones
+            filterOptions.vendedores = vendedores.sort();
+            filterOptions.empresas = empresas.sort();
+            filterOptions.clientes = clientes.sort();
+            filterOptions.modelos = modelos.sort();
+
+            // Llenar selectores
+            populateSelect('vendedorFilter', filterOptions.vendedores);
+            populateSelect('empresaFilter', filterOptions.empresas);
+            populateSelect('clienteFilter', filterOptions.clientes);
+            populateSelect('modeloFilter', filterOptions.modelos);
+        }
+
+        function populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            const currentValue = select.value;
+            
+            // Limpiar opciones excepto la primera
+            select.innerHTML = select.children[0].outerHTML;
+            
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+            
+            // Restaurar valor si existía
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        }
+
+        function generateTable() {
+            if (!excelData || excelData.length === 0) {
+                showError('Por favor cargue un archivo Excel primero');
+                return;
+            }
+
+            try {
+                // Obtener filtros básicos
+                const vendedorFilter = document.getElementById('vendedorFilter').value;
+                const empresaFilter = document.getElementById('empresaFilter').value;
+                const clienteFilter = document.getElementById('clienteFilter').value;
+                const modeloFilter = document.getElementById('modeloFilter').value;
+
+                // Filtrar datos básicos
+                let filteredData = excelData.filter(row => {
+                    return (
+                        (!vendedorFilter || formatValue(row['Nombre vendedor']) === vendedorFilter) &&
+                        (!empresaFilter || formatValue(row['Concesi']) === empresaFilter) &&
+                        (!clienteFilter || formatValue(row['Cliente']) === clienteFilter) &&
+                        (!modeloFilter || formatValue(row['Modelo']) === modeloFilter)
+                    );
+                });
+
+                // Aplicar filtros especiales
+                filteredData = applySpecialFilters(filteredData);
+
+                // Obtener columnas seleccionadas
+                const selectedColumns = getSelectedColumns();
+
+                if (selectedColumns.length === 0) {
+                    showError('Por favor seleccione al menos una columna para mostrar');
+                    return;
+                }
+
+                // Generar tabla
+                generateSalesTable(filteredData, selectedColumns);
+
+                // Actualizar estadísticas
+                updateStats(filteredData, selectedColumns);
+                
+                showSuccess('Tabla generada exitosamente');
+                
+            } catch (error) {
+                showError('Error al generar la tabla: ' + error.message);
+            }
+        }
+
+        function getSelectedColumns() {
+            const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => ({
+                id: cb.id,
+                value: cb.value,
+                label: cb.nextElementSibling.textContent
+            }));
+        }
+
+        function applySpecialFilters(data) {
+            let filteredData = [...data];
+
+            // Filtrar por pérdida/ganancia
+            const showPerdida = document.getElementById('showPerdida').checked;
+            const showGanancia = document.getElementById('showGanancia').checked;
+            
+            // Obtener columnas seleccionadas para aplicar filtros de pérdida/ganancia
+            const showVentaPura = document.getElementById('showVentaPura').checked;
+            const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+            const showCostoTaller = document.getElementById('showCostoTaller').checked;
+            const showBeneficio = document.getElementById('showBeneficio').checked;
+
+            if (showPerdida && !showGanancia) {
+                // Mostrar solo pérdidas
+                filteredData = filteredData.filter(row => {
+                    let hasPerdida = false;
+                    
+                    if (showVentaPura) {
+                        const valor = parseFloat(row['VENTA PURA']) || 0;
+                        if (valor < 0) hasPerdida = true;
+                    }
+                    
+                    if (showBeneficioPuro) {
+                        const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                        if (valor < 0) hasPerdida = true;
+                    }
+                    
+                    if (showCostoTaller) {
+                        const valor = parseFloat(row['Cos.taller']) || 0;
+                        if (valor < 0) hasPerdida = true;
+                    }
+                    
+                    if (showBeneficio) {
+                        const valor = parseFloat(row['Beneficio']) || 0;
+                        if (valor < 0) hasPerdida = true;
+                    }
+                    
+                    return hasPerdida;
+                });
+            } else if (showGanancia && !showPerdida) {
+                // Mostrar solo ganancias
+                filteredData = filteredData.filter(row => {
+                    let hasGanancia = false;
+                    
+                    if (showVentaPura) {
+                        const valor = parseFloat(row['VENTA PURA']) || 0;
+                        if (valor > 0) hasGanancia = true;
+                    }
+                    
+                    if (showBeneficioPuro) {
+                        const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                        if (valor > 0) hasGanancia = true;
+                    }
+                    
+                    if (showCostoTaller) {
+                        const valor = parseFloat(row['Cos.taller']) || 0;
+                        if (valor > 0) hasGanancia = true;
+                    }
+                    
+                    if (showBeneficio) {
+                        const valor = parseFloat(row['Beneficio']) || 0;
+                        if (valor > 0) hasGanancia = true;
+                    }
+                    
+                    return hasGanancia;
+                });
+            }
+
+            // Aplicar filtro de porcentaje
+            const showPorcentaje = document.getElementById('showPorcentaje').checked;
+            if (showPorcentaje) {
+            const percentageCondition = document.getElementById('percentageCondition').value;
+            const percentageValue = parseFloat(document.getElementById('percentageValue').value);
+            const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+            const showBeneficio = document.getElementById('showBeneficio').checked;
+            
+            if (!isNaN(percentageValue)) {
+                filteredData = filteredData.filter(row => {
+                    let matchesFilter = false;
+                    
+                    if (showBeneficioPuro) {
+                        const columnValue = parseFloat(row['% BEN PURO']) || 0;
+                        switch (percentageCondition) {
+                            case 'mayor':
+                                if (columnValue > percentageValue) matchesFilter = true;
+                                break;
+                            case 'menor':
+                                if (columnValue < percentageValue) matchesFilter = true;
+                                break;
+                            case 'igual':
+                                if (Math.abs(columnValue - percentageValue) < 0.001) matchesFilter = true;
+                                break;
+                        }
+                    }
+                    
+                    if (showBeneficio && !matchesFilter) {
+                        const columnValue = parseFloat(row['% Ben']) || 0;
+                        switch (percentageCondition) {
+                            case 'mayor':
+                                if (columnValue > percentageValue) matchesFilter = true;
+                                break;
+                            case 'menor':
+                                if (columnValue < percentageValue) matchesFilter = true;
+                                break;
+                            case 'igual':
+                                if (Math.abs(columnValue - percentageValue) < 0.001) matchesFilter = true;
+                                break;
+                        }
+                    }
+                    
+                    return matchesFilter;
+                });
+            }
+        }
+
+            return filteredData;
+        }
+
+        function generateSalesTable(data, columns) {
+            const tableContent = document.getElementById('tableContent');
+            
+            if (data.length === 0) {
+                tableContent.innerHTML = '<div class="loading">No se encontraron registros con los filtros aplicados</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr>';
+            
+            // Columna de numeración
+            html += '<th class="row-number">#</th>';
+            
+            // Generar encabezados
+            columns.forEach(col => {
+                if (col.value === 'Porcentaje') {
+                    const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                    const showBeneficio = document.getElementById('showBeneficio').checked;
+                    
+                    if (showBeneficioPuro) {
+                        html += '<th>% Beneficio Puro</th>';
+                    }
+                    if (showBeneficio) {
+                        html += '<th>% Beneficio</th>';
+                    }
+                } else if (col.value === 'Perdida') {
+                    html += '<th>Pérdida</th>';
+                } else if (col.value === 'Ganancia') {
+                    html += '<th>Ganancia</th>';
+                } else {
+                    html += `<th>${col.label}</th>`;
+                }
+            });
+            
+            html += '</tr></thead><tbody>';
+
+            // Generar filas
+            data.forEach((row, index) => {
+                html += '<tr>';
+                
+                // Columna de numeración
+                html += `<td class="row-number">${index + 1}</td>`;
+                
+                columns.forEach(col => {
+                    if (col.value === 'Porcentaje') {
+                        const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                        const showBeneficio = document.getElementById('showBeneficio').checked;
+                        
+                        if (showBeneficioPuro) {
+                            const porcentaje = parseFloat(row['% BEN PURO']) || 0;
+                            const clase = porcentaje < 0 ? 'negative-value' : porcentaje > 0 ? 'positive-value' : '';
+                            html += `<td class="${clase}">${formatCurrency(porcentaje)}%</td>`;
+                        }
+                        if (showBeneficio) {
+                            const porcentaje = parseFloat(row['% Ben']) || 0;
+                            const clase = porcentaje < 0 ? 'negative-value' : porcentaje > 0 ? 'positive-value' : '';
+                            html += `<td class="${clase}">${formatCurrency(porcentaje)}%</td>`;
+                        }
+                    } else if (col.value === 'Perdida') {
+                        // Mostrar pérdidas de las columnas seleccionadas
+                        const showVentaPura = document.getElementById('showVentaPura').checked;
+                        const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                        const showCostoTaller = document.getElementById('showCostoTaller').checked;
+                        const showBeneficio = document.getElementById('showBeneficio').checked;
+                        
+                        let perdidaTotal = 0;
+                        
+                        if (showVentaPura) {
+                            const valor = parseFloat(row['VENTA PURA']) || 0;
+                            if (valor < 0) perdidaTotal += Math.abs(valor);
+                        }
+                        
+                        if (showBeneficioPuro) {
+                            const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                            if (valor < 0) perdidaTotal += Math.abs(valor);
+                        }
+                        
+                        if (showCostoTaller) {
+                            const valor = parseFloat(row['Cos.taller']) || 0;
+                            if (valor < 0) perdidaTotal += Math.abs(valor);
+                        }
+                        
+                        if (showBeneficio) {
+                            const valor = parseFloat(row['Beneficio']) || 0;
+                            if (valor < 0) perdidaTotal += Math.abs(valor);
+                        }
+                        
+                        if (perdidaTotal > 0) {
+                            html += `<td class="negative-value">${formatCurrency(perdidaTotal)}</td>`;
+                        } else {
+                            html += '<td>0.00</td>';
+                        }
+                    } else if (col.value === 'Ganancia') {
+                        // Mostrar ganancias de las columnas seleccionadas
+                        const showVentaPura = document.getElementById('showVentaPura').checked;
+                        const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                        const showCostoTaller = document.getElementById('showCostoTaller').checked;
+                        const showBeneficio = document.getElementById('showBeneficio').checked;
+                        
+                        let gananciaTotal = 0;
+                        
+                        if (showVentaPura) {
+                            const valor = parseFloat(row['VENTA PURA']) || 0;
+                            if (valor > 0) gananciaTotal += valor;
+                        }
+                        
+                        if (showBeneficioPuro) {
+                            const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                            if (valor > 0) gananciaTotal += valor;
+                        }
+                        
+                        if (showCostoTaller) {
+                            const valor = parseFloat(row['Cos.taller']) || 0;
+                            if (valor > 0) gananciaTotal += valor;
+                        }
+                        
+                        if (showBeneficio) {
+                            const valor = parseFloat(row['Beneficio']) || 0;
+                            if (valor > 0) gananciaTotal += valor;
+                        }
+                        
+                        if (gananciaTotal > 0) {
+                            html += `<td class="positive-value">${formatCurrency(gananciaTotal)}</td>`;
+                        } else {
+                            html += '<td>0.00</td>';
+                        }
+                    } else {
+                        // Manejo normal para otras columnas
+                        if (['VENTA PURA', 'BENEFICIO PURO', 'Cos.taller', 'Beneficio'].includes(col.value)) {
+                            const value = parseFloat(row[col.value]) || 0;
+                            const clase = value < 0 ? 'negative-value' : value > 0 ? 'positive-value' : '';
+                            html += `<td class="${clase}">${formatCurrency(value)}</td>`;
+                        } else {
+                            html += `<td>${formatValue(row[col.value])}</td>`;
+                        }
+                    }
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            tableContent.innerHTML = html;
+        }
+
+        function updateStats(data, columns) {
+            const totalRegistros = document.getElementById('totalRegistros');
+            const statsContent = document.getElementById('statsContent');
+            
+            totalRegistros.textContent = data.length;
+            
+            if (data.length === 0) {
+                statsContent.innerHTML = 'No hay datos para mostrar estadísticas';
+                return;
+            }
+
+            let statsHtml = '';
+            
+            // Calcular totales solo para las columnas seleccionadas
+            columns.forEach(col => {
+                if (col.value === 'VENTA PURA' && document.getElementById('showVentaPura').checked) {
+                    const total = data.reduce((sum, row) => sum + (parseFloat(row['VENTA PURA']) || 0), 0);
+                    statsHtml += `<div class="stat-item">
+                        <strong>Total Venta Pura:</strong> 
+                        <span class="${total >= 0 ? 'positive-value' : 'negative-value'}">$${formatCurrency(total)}</span>
+                    </div>`;
+                }
+                
+                if (col.value === 'BENEFICIO PURO' && document.getElementById('showBeneficioPuro').checked) {
+                    const total = data.reduce((sum, row) => sum + (parseFloat(row['BENEFICIO PURO']) || 0), 0);
+                    statsHtml += `<div class="stat-item">
+                        <strong>Total Beneficio Puro:</strong> 
+                        <span class="${total >= 0 ? 'positive-value' : 'negative-value'}">$${formatCurrency(total)}</span>
+                    </div>`;
+                }
+                
+                if (col.value === 'Cos.taller' && document.getElementById('showCostoTaller').checked) {
+                    const total = data.reduce((sum, row) => sum + (parseFloat(row['Cos.taller']) || 0), 0);
+                    statsHtml += `<div class="stat-item">
+                        <strong>Total Costo Taller:</strong> 
+                        <span class="${total >= 0 ? 'positive-value' : 'negative-value'}">$${formatCurrency(total)}</span>
+                    </div>`;
+                }
+                
+                if (col.value === 'Beneficio' && document.getElementById('showBeneficio').checked) {
+                    const total = data.reduce((sum, row) => sum + (parseFloat(row['Beneficio']) || 0), 0);
+                    statsHtml += `<div class="stat-item">
+                        <strong>Total Beneficio:</strong> 
+                        <span class="${total >= 0 ? 'positive-value' : 'negative-value'}">$${formatCurrency(total)}</span>
+                    </div>`;
+                }
+            });
+            
+            // Estadísticas especiales para Pérdida y Ganancia
+            if (document.getElementById('showPerdida').checked) {
+                const showVentaPura = document.getElementById('showVentaPura').checked;
+                const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                const showCostoTaller = document.getElementById('showCostoTaller').checked;
+                const showBeneficio = document.getElementById('showBeneficio').checked;
+                
+                let totalPerdida = 0;
+                data.forEach(row => {
+                    if (showVentaPura) {
+                        const valor = parseFloat(row['VENTA PURA']) || 0;
+                        if (valor < 0) totalPerdida += Math.abs(valor);
+                    }
+                    
+                    if (showBeneficioPuro) {
+                        const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                        if (valor < 0) totalPerdida += Math.abs(valor);
+                    }
+                    
+                    if (showCostoTaller) {
+                        const valor = parseFloat(row['Cos.taller']) || 0;
+                        if (valor < 0) totalPerdida += Math.abs(valor);
+                    }
+                    
+                    if (showBeneficio) {
+                        const valor = parseFloat(row['Beneficio']) || 0;
+                        if (valor < 0) totalPerdida += Math.abs(valor);
+                    }
+                });
+                
+                statsHtml += `<div class="stat-item">
+                    <strong>Total Pérdidas:</strong> 
+                    <span class="negative-value">$${formatCurrency(totalPerdida)}</span>
+                </div>`;
+            }
+            
+            if (document.getElementById('showGanancia').checked) {
+                const showVentaPura = document.getElementById('showVentaPura').checked;
+                const showBeneficioPuro = document.getElementById('showBeneficioPuro').checked;
+                const showCostoTaller = document.getElementById('showCostoTaller').checked;
+                const showBeneficio = document.getElementById('showBeneficio').checked;
+                
+                let totalGanancia = 0;
+                data.forEach(row => {
+                    if (showVentaPura) {
+                        const valor = parseFloat(row['VENTA PURA']) || 0;
+                        if (valor > 0) totalGanancia += valor;
+                    }
+                    
+                    if (showBeneficioPuro) {
+                        const valor = parseFloat(row['BENEFICIO PURO']) || 0;
+                        if (valor > 0) totalGanancia += valor;
+                    }
+                    
+                    if (showCostoTaller) {
+                        const valor = parseFloat(row['Cos.taller']) || 0;
+                        if (valor > 0) totalGanancia += valor;
+                    }
+                    
+                    if (showBeneficio) {
+                        const valor = parseFloat(row['Beneficio']) || 0;
+                        if (valor > 0) totalGanancia += valor;
+                    }
+                });
+                
+                statsHtml += `<div class="stat-item">
+                    <strong>Total Ganancias:</strong> 
+                    <span class="positive-value">$${formatCurrency(totalGanancia)}</span>
+                </div>`;
+            }
+            
+            // Estadísticas para Porcentajes
+            if (document.getElementById('showPorcentaje').checked) {
+                if (document.getElementById('showBeneficioPuro').checked) {
+                    const porcentajes = data.map(row => parseFloat(row['% BEN PURO']) || 0);
+                    if (porcentajes.length > 0) {
+                        const promedio = porcentajes.reduce((sum, val) => sum + val, 0) / porcentajes.length;
+                        statsHtml += `<div class="stat-item">
+                            <strong>Promedio % Beneficio Puro:</strong> 
+                            <span class="${promedio >= 0 ? 'positive-value' : 'negative-value'}">${formatCurrency(promedio)}%</span>
+                        </div>`;
+                    }
+                }
+                
+                if (document.getElementById('showBeneficio').checked) {
+                    const porcentajes = data.map(row => parseFloat(row['% Ben']) || 0);
+                    if (porcentajes.length > 0) {
+                        const promedio = porcentajes.reduce((sum, val) => sum + val, 0) / porcentajes.length;
+                        statsHtml += `<div class="stat-item">
+                            <strong>Promedio % Beneficio:</strong> 
+                            <span class="${promedio >= 0 ? 'positive-value' : 'negative-value'}">${formatCurrency(promedio)}%</span>
+                        </div>`;
+                    }
+                }
+            }
+            
+            if (statsHtml === '') {
+                statsContent.innerHTML = 'Seleccione columnas numéricas para ver estadísticas';
+            } else {
+                statsContent.innerHTML = statsHtml;
+            }
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const container = document.querySelector('.container');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // Inicializar la visibilidad del filtro de porcentaje al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePercentageFilter();
+        });
+
+    </script>
+</body>
+</html>
